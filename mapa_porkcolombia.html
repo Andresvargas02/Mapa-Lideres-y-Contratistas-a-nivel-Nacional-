@@ -1,0 +1,374 @@
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; padding: 8px 12px; }
+  #pk-header { display:flex; align-items:center; gap:12px; padding:10px 0; margin-bottom:0; border-bottom:1px solid rgba(0,0,0,0.07); flex-wrap:wrap; }
+  #pk-logo-ring { width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#1A8DAD 0%,#0B5E7A 100%); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 2px 8px rgba(26,141,173,0.35); }
+  #pk-logo-ring svg { width:20px; height:20px; }
+  #pk-title-block h1 { margin:0; font-family:'Plus Jakarta Sans',sans-serif; font-size:15px; font-weight:700; color:var(--color-text-primary); letter-spacing:-0.01em; line-height:1.2; }
+  #pk-title-block p { margin:0; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; color:var(--color-text-secondary); letter-spacing:0.02em; text-transform:uppercase; font-weight:500; }
+  #pk-legends { display:flex; flex-direction:column; gap:3px; margin-left:8px; padding-left:12px; border-left:1px solid rgba(0,0,0,0.08); }
+  #pk-badge { margin-left:auto; font-family:'DM Mono',monospace; font-size:10px; padding:3px 9px; border-radius:20px; background:rgba(26,141,173,0.10); color:#1A8DAD; border:1px solid rgba(26,141,173,0.2); white-space:nowrap; letter-spacing:0.03em; }
+  #wrap { display:flex; gap:18px; padding:0; min-height:600px; align-items:flex-start; font-family:'Plus Jakarta Sans',sans-serif; }
+  #map-col { flex:0 0 520px; margin-top:-8px; }
+  #map-col svg { width:100%; height:auto; display:block; }
+  .dept { transition:opacity .18s ease,filter .18s ease; cursor:pointer; stroke:#fff; stroke-width:.5; filter:drop-shadow(0 1px 2px rgba(0,0,0,.12)); }
+  .dept:hover { opacity:.82; stroke-width:2; stroke:#fff; filter:drop-shadow(0 3px 8px rgba(0,0,0,.22)); }
+  .dept.selected { stroke:#fff; stroke-width:2.5; filter:drop-shadow(0 0 0 2.5px rgba(0,0,0,.7)) drop-shadow(0 4px 12px rgba(0,0,0,.3)); }
+  #legend, #zone-legend { display:flex; gap:10px; flex-wrap:wrap; font-size:10px; font-family:'Plus Jakarta Sans',sans-serif; margin:0; }
+  #legend span, #zone-legend span { display:flex; align-items:center; gap:4px; color:var(--color-text-secondary); font-weight:500; }
+  .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .hint { font-size:10.5px; color:var(--color-text-secondary); margin-top:6px; text-align:center; font-family:'Plus Jakarta Sans',sans-serif; display:flex; align-items:center; justify-content:center; gap:5px; opacity:.7; }
+  #panel { flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; }
+  #default-msg { color:var(--color-text-secondary); font-size:13px; margin-top:1rem; text-align:center; padding:2.5rem 1.5rem; border:1.5px dashed var(--color-border-tertiary); border-radius:14px; font-family:'Plus Jakarta Sans',sans-serif; background:rgba(0,0,0,0.01); display:flex; flex-direction:column; align-items:center; gap:8px; }
+  #default-msg .empty-icon { width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,rgba(26,141,173,.1),rgba(26,141,173,.05)); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  #default-msg strong { display:block; font-size:13px; font-weight:600; color:var(--color-text-primary); margin-bottom:2px; }
+  #card { display:none; background:var(--color-background-primary); border:1px solid var(--color-border-tertiary); border-radius:14px; padding:1rem 1.1rem; overflow-y:auto; max-height:450px; animation:slideIn .22s ease; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+  @keyframes slideIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  #card h3 { margin:0 0 4px; font-size:16px; font-weight:700; color:var(--color-text-primary); font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:-0.01em; }
+  .role-badge { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:600; padding:3px 10px; border-radius:20px; margin-bottom:12px; font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:0.01em; }
+  .badge-lr  { background:#D6EEF5; color:#0B5E7A; border:1px solid rgba(11,94,122,.15); }
+  .badge-ct  { background:#FBEAF0; color:#993556; border:1px solid rgba(153,53,86,.15); }
+  .badge-both{ background:#D6F0EA; color:#0B5E4A; border:1px solid rgba(11,94,74,.15); }
+  .badge-none{ background:#F1EFE8; color:#5F5E5A; border:1px solid rgba(95,94,90,.15); }
+  #dept-stats { display:flex; gap:8px; margin-bottom:14px; }
+  .stat-card { flex:1; background:var(--color-background-secondary); border-radius:10px; padding:10px; text-align:center; border:1px solid var(--color-border-tertiary); transition:transform .15s ease; }
+  .stat-card:hover { transform:translateY(-1px); }
+  .stat-n { font-size:22px; font-weight:700; color:var(--color-text-primary); font-family:'DM Mono',monospace; }
+  .stat-l  { font-size:10px; color:var(--color-text-secondary); margin-top:2px; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+  h4.sec { font-size:9.5px; font-weight:700; margin:14px 0 6px; color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:.08em; font-family:'Plus Jakarta Sans',sans-serif; display:flex; align-items:center; gap:6px; }
+  h4.sec::after { content:''; flex:1; height:1px; background:var(--color-border-tertiary); border-radius:1px; }
+  .person { display:flex; align-items:center; gap:10px; padding:8px 6px; border-radius:8px; transition:background .12s ease; cursor:default; }
+  .person:hover { background:var(--color-background-secondary); }
+  .avatar { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:.02em; }
+  .av-lr { background:linear-gradient(135deg,#3AACCC,#1A8DAD); color:#fff; box-shadow:0 2px 6px rgba(58,172,204,.3); }
+  .av-ct { background:linear-gradient(135deg,#F4C0D1,#E89AAF); color:#72243E; box-shadow:0 2px 6px rgba(244,192,209,.4); }
+  .av-si { background:linear-gradient(135deg,#D3D1C7,#B9B7AC); color:#444441; }
+  .person-info { min-width:0; }
+  .person-name  { font-size:13px; font-weight:600; color:var(--color-text-primary); font-family:'Plus Jakarta Sans',sans-serif; }
+  .person-role  { font-size:10.5px; color:var(--color-text-secondary); margin-top:1px; font-weight:500; }
+  .person-email { font-size:10.5px; color:#1A8DAD; word-break:break-all; font-family:'DM Mono',monospace; margin-top:2px; opacity:.85; }
+  #totales-box { background:var(--color-background-primary); border:1px solid var(--color-border-tertiary); border-radius:14px; padding:14px 14px 12px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+  #totales-box h4 { margin:0 0 10px; font-size:9.5px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:.08em; font-family:'Plus Jakarta Sans',sans-serif; display:flex; align-items:center; gap:6px; }
+  #totales-box h4::before { content:''; width:3px; height:3px; border-radius:50%; background:#1A8DAD; display:inline-block; }
+  #totales-grid { display:flex; gap:8px; }
+  .tot-card { flex:1; border-radius:10px; padding:12px 10px; text-align:center; transition:transform .15s ease,box-shadow .15s ease; border:1px solid transparent; }
+  .tot-card:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.1); }
+  .tot-lr  { background:linear-gradient(135deg,#EBF6FA,#D6EEF5); border-color:rgba(26,141,173,.18); }
+  .tot-ct  { background:linear-gradient(135deg,#FDF0F4,#FBEAF0); border-color:rgba(212,83,126,.18); }
+  .tot-all { background:var(--color-background-secondary); border-color:var(--color-border-tertiary); }
+  .tot-n { font-size:26px; font-weight:700; font-family:'DM Mono',monospace; line-height:1; }
+  .tot-lr .tot-n { color:#0B5E7A; }
+  .tot-ct .tot-n { color:#993556; }
+  .tot-all .tot-n { color:var(--color-text-primary); }
+  .tot-l { font-size:9.5px; margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; font-family:'Plus Jakarta Sans',sans-serif; }
+  .tot-lr .tot-l { color:#1A8DAD; }
+  .tot-ct .tot-l { color:#D4537E; }
+  .tot-all .tot-l { color:var(--color-text-secondary); }
+  #card::-webkit-scrollbar { width:4px; }
+  #card::-webkit-scrollbar-track { background:transparent; }
+  #card::-webkit-scrollbar-thumb { background:var(--color-border-tertiary); border-radius:4px; }
+</style>
+
+<div id="pk-header">
+  <div id="pk-logo-ring">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="white" opacity=".2"/><path d="M9 9a3 3 0 0 1 6 0v1a3 3 0 0 1-6 0V9z" fill="white"/><path d="M7 14c0-1.1.9-2 2-2h6a2 2 0 0 1 2 2v1H7v-1z" fill="white" opacity=".8"/></svg>
+  </div>
+  <div id="pk-title-block">
+    <h1>Porkcolombia · Equipo de Campo</h1>
+    <p>Líderes regionales y contratistas por departamento</p>
+  </div>
+  <div id="pk-legends">
+    <div id="legend">
+      <span><span class="dot" style="background:#1A8DAD"></span>Líder Regional</span>
+      <span><span class="dot" style="background:#D4537E"></span>Contratista</span>
+      <span><span class="dot" style="background:#2ABFA0"></span>Ambos</span>
+      <span><span class="dot" style="background:#B4B2A9"></span>Sin personal</span>
+    </div>
+    <div id="zone-legend">
+      <span><span class="dot" style="border-radius:3px;background:#9B59B6"></span>Erradicación</span>
+      <span><span class="dot" style="border-radius:3px;background:#E8622A"></span>Libre 1</span>
+      <span><span class="dot" style="border-radius:3px;background:#2980B9"></span>Libre 2</span>
+      <span><span class="dot" style="border-radius:3px;background:#F1C40F"></span>Control</span>
+    </div>
+  </div>
+  <div id="pk-badge">v2 · 2026</div>
+</div>
+
+<div id="wrap">
+  <div id="map-col">
+    <svg id="svg-map" viewBox="0 0 520 740"></svg>
+    <p class="hint">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity=".5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      Haz clic en un departamento para ver su equipo
+    </p>
+  </div>
+  <div id="panel">
+    <div id="default-msg">
+      <div class="empty-icon">🗺️</div>
+      <strong>Selecciona un departamento</strong>
+      <span>Haz clic en el mapa para ver el equipo asignado a cada zona</span>
+    </div>
+    <div id="card"></div>
+    <div id="totales-box">
+      <h4>Total equipo nacional</h4>
+      <div id="totales-grid">
+        <div class="tot-card tot-lr"><div class="tot-n" id="t-lr">0</div><div class="tot-l">Líderes Regionales</div></div>
+        <div class="tot-card tot-ct"><div class="tot-n" id="t-ct">0</div><div class="tot-l">Contratistas</div></div>
+        <div class="tot-card tot-all"><div class="tot-n" id="t-all">0</div><div class="tot-l">Total personas</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+const PEOPLE = [
+  // Líderes Regionales
+  {name:"Alberto Mario Cuello Vega",       role:"Líder Regional",     email:"acuello@porkcolombia.co",      dept:"La Guajira"},
+  {name:"Alberto Mario Cuello Vega",       role:"Líder Regional",     email:"acuello@porkcolombia.co",      dept:"Cesar"},
+  {name:"Andrea Mantilla",                 role:"Líder Regional",     email:"amantilla@porkcolombia.co",    dept:"Caquetá"},
+  {name:"Andrea Mantilla",                 role:"Líder Regional",     email:"amantilla@porkcolombia.co",    dept:"Putumayo"},
+  {name:"Carina Tatiana Velasquez Mendoza",role:"Líder Regional",     email:"cvelasquez@porkcolombia.co",   dept:"Arauca"},
+  {name:"Carina Tatiana Velasquez Mendoza",role:"Líder Regional",     email:"cvelasquez@porkcolombia.co",   dept:"Casanare"},
+  {name:"Franklin Octavio Rosero Chacua",  role:"Líder Regional",     email:"frosero@porkcolombia.co",      dept:"Quindío"},
+  {name:"Franklin Octavio Rosero Chacua",  role:"Líder Regional",     email:"frosero@porkcolombia.co",      dept:"Risaralda"},
+  {name:"Laura Milena Oyola Moreno",       role:"Líder Regional",     email:"loyola@porkcolombia.co",       dept:"Vichada"},
+  {name:"Laura Milena Oyola Moreno",       role:"Líder Regional",     email:"loyola@porkcolombia.co",       dept:"Meta"},
+  {name:"Laura Milena Oyola Moreno",       role:"Líder Regional",     email:"loyola@porkcolombia.co",       dept:"Guainía"},
+  {name:"Laura Milena Oyola Moreno",       role:"Líder Regional",     email:"loyola@porkcolombia.co",       dept:"Guaviare"},
+  {name:"Marlyth Martinez Rivera",         role:"Líder Regional",     email:"mmartinez@porkcolombia.co",    dept:"Antioquia"},
+  {name:"Marlyth Martinez Rivera",         role:"Líder Regional",     email:"mmartinez@porkcolombia.co",    dept:"Chocó"},
+  {name:"Edna Tatiana Rodriguez Serrano",  role:"Líder Regional",     email:"trodriguez@porkcolombia.co",   dept:"Sucre"},
+  {name:"Marco Andrés Díaz Yunda",         role:"Líder Regional",     email:"mdiaz@porkcolombia.co",        dept:"Valle del Cauca"},
+  {name:"Marco Andrés Díaz Yunda",         role:"Líder Regional",     email:"mdiaz@porkcolombia.co",        dept:"Cauca"},
+  {name:"Jesus David Guera Lopez",         role:"Líder Regional",     email:"jguerra@porkcolombia.co",      dept:"Magdalena"},
+  {name:"John Heiber Aranda Cruz",         role:"Líder Regional",     email:"jaranda@porkcolombia.co",      dept:"Tolima"},
+  {name:"Jorge Mario Perez Carrascal",     role:"Líder Regional",     email:"jperez@porkcolombia.co",       dept:"Atlántico"},
+  {name:"Jose David Roman Villero",        role:"Líder Regional",     email:"jroman@porkcolombia.co",       dept:"Córdoba"},
+  {name:"Jose Heriberto Vega Torres",      role:"Líder Regional",     email:"jvega@porkcolombia.co",        dept:"Norte de Santander"},
+  {name:"Juan Camilo Vanegas Piedrahita",  role:"Líder Regional",     email:"jvanegas@porkcolombia.co",     dept:"Antioquia"},
+  {name:"Julia Etelvina Unigarro Pastas",  role:"Líder Regional",     email:"junigarro@porkcolombia.co",    dept:"Nariño"},
+  {name:"Lucy Adriana Salgar Jimenez",     role:"Líder Regional",     email:"lsalgar@porkcolombia.co",      dept:"Antioquia"},
+  {name:"Carlos Mario Padilla Gracia",     role:"Líder Regional",     email:"cpadilla@porkcolombia.co",     dept:"Bolívar"},
+  {name:"Miller Eduardo Floriano Ordoñez", role:"Líder Regional",     email:"efloriano@porkcolombia.co",    dept:"Huila"},
+  {name:"Orfa Lucy Ceballos Quintana",     role:"Líder Regional",     email:"lceballos@porkcolombia.co",    dept:"Santander"},
+  {name:"Raul Dario Suarez Camacho",       role:"Líder Regional",     email:"rsuarez@porkcolombia.co",      dept:"Boyacá"},
+  {name:"Yurley Katherine Montaño Ruiz",   role:"Líder Regional",     email:"kmontano@porkcolombia.co",     dept:"Cundinamarca"},
+  // Contratistas
+  {name:"Natalia Roman",                   role:"Contratista",        email:"nroman@porkcolombia.co",       dept:"Antioquia"},
+  {name:"Sara Sierra",                     role:"Contratista",        email:"sarasierra92@hotmail.com",     dept:"Caldas"},
+  {name:"Juan Andres Angulo",              role:"Contratista",        email:"Jangulo@porkcolombia.co",      dept:"Bogotá D.C."},
+  {name:"Luz Yalena Eusse",               role:"Contratista",        email:"leusse@porkcolombia.co",       dept:"Sucre"},
+  {name:"Nery Ortiz",                      role:"Contratista",        email:"nortiz@porkcolombia.co",       dept:"Córdoba"},
+  {name:"Cesar Gutierrez",                 role:"Contratista",        email:"cgutierrez@porkcolombia.co",   dept:"Casanare"},
+  {name:"Wendy Acevedo",                   role:"Contratista",        email:"wacevedo@porkcolombia.co",     dept:"Risaralda"},
+  {name:"Diana Jaramillo",                 role:"Contratista",        email:"djaramillo@porkcolombia.co",   dept:"Antioquia"},
+  {name:"Daniel Acevedo",                  role:"Contratista",        email:"dacevedo@porkcolombia.co",     dept:"Risaralda"},
+  {name:"Angela Rincon",                   role:"Contratista",        email:"arincon@porkcolombia.co",      dept:"Bogotá D.C."},
+  // Contratistas SIVIP (sin email)
+  {name:"Hector Enrique Medina",           role:"Contratista Sivip",  email:"N/a",                          dept:"Bogotá D.C."},
+  {name:"Wilian Velandia",                 role:"Contratista Sivip",  email:"N/a",                          dept:"Bogotá D.C."},
+  {name:"Cristian Medina",                 role:"Contratista Sivip",  email:"N/a",                          dept:"Bogotá D.C."},
+  {name:"Maryori Parada",                  role:"Contratista Sivip",  email:"N/a",                          dept:"Bogotá D.C."},
+  {name:"Camilo Rivera",                   role:"Contratista Sivip",  email:"N/a",                          dept:"Bogotá D.C."},
+  {name:"Jhoan Miller",                    role:"Contratista Sivip",  email:"N/a",                          dept:"Bogotá D.C."},
+  {name:"Carlos Torres",                   role:"Contratista Sivip",  email:"N/a",                          dept:"Bogotá D.C."},
+];
+
+const isLR  = p => p.role === "Líder Regional";
+const isCT  = p => p.role === "Contratista" || p.role === "Contratista Sivip";
+const isSivip = p => p.role === "Contratista Sivip";
+
+const totalLR  = new Set(PEOPLE.filter(isLR).map(p=>p.name)).size;
+const totalCT  = new Set(PEOPLE.filter(isCT).map(p=>p.name)).size;
+const totalAll = new Set(PEOPLE.map(p=>p.name)).size;
+
+function animateCount(el, target, duration=800){
+  const start = performance.now();
+  (function step(now){
+    const p = Math.min((now-start)/duration,1);
+    el.textContent = Math.round((1-Math.pow(1-p,3))*target);
+    if(p<1) requestAnimationFrame(step);
+  })(start);
+}
+setTimeout(()=>{
+  animateCount(document.getElementById("t-lr"),  totalLR);
+  animateCount(document.getElementById("t-ct"),  totalCT, 900);
+  animateCount(document.getElementById("t-all"), totalAll, 1000);
+}, 300);
+
+const byDept={};
+PEOPLE.forEach(p=>{ (byDept[p.dept]=byDept[p.dept]||[]).push(p); });
+
+const ZONE_COLORS = {
+  erradicacion:"#9B59B6", libre1:"#E8622A", libre2:"#2980B9", control:"#F1C40F", none:"#B4B2A9"
+};
+const DEPT_ZONE = {
+  "Cauca":"erradicacion","Nariño":"erradicacion","Putumayo":"erradicacion",
+  "Antioquia":"libre1","Caldas":"libre1","Chocó":"libre1","Quindío":"libre1","Risaralda":"libre1","Valle del Cauca":"libre1",
+  "Amazonas":"libre1","Guainía":"libre1","Guaviare":"libre1","Vichada":"libre1","Vaupés":"libre1",
+  "Boyacá":"libre2","Caquetá":"libre2","Casanare":"libre2","Cundinamarca":"libre2","Huila":"libre2",
+  "Meta":"libre2","Santander":"libre2","Tolima":"libre2","Bogotá D.C.":"libre2",
+  "Arauca":"control","Atlántico":"control","Bolívar":"control","Cesar":"control","Córdoba":"control",
+  "La Guajira":"control","Magdalena":"control","Norte de Santander":"control","Sucre":"control",
+};
+
+const deptColor  = n => ZONE_COLORS[DEPT_ZONE[n]||"none"];
+const deptOpacity= n => (byDept[n]||[]).length>0 ? 1 : 0.65;
+
+function deptStroke(name){
+  const ppl=byDept[name]||[];
+  const hasLR=ppl.some(isLR), hasCT=ppl.some(isCT);
+  if(hasLR&&hasCT) return {color:"#2ABFA0",width:2};
+  if(hasLR)        return {color:"#1A8DAD",width:2};
+  if(hasCT)        return {color:"#D4537E",width:2};
+  return {color:"#fff",width:.5};
+}
+
+function initials(n){ return n.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase(); }
+
+function showCard(deptName){
+  const ppl  = byDept[deptName]||[];
+  const lrs  = ppl.filter(isLR);
+  const cts  = ppl.filter(p=>p.role==="Contratista");
+  const sivs = ppl.filter(isSivip);
+  const hasLR=lrs.length>0, hasCT=cts.length>0||sivs.length>0;
+  const bc = hasLR&&hasCT?"badge-both":hasLR?"badge-lr":hasCT?"badge-ct":"badge-none";
+  const bt = hasLR&&hasCT?"Líder Regional + Contratista":hasLR?"Líder Regional":hasCT?"Contratista":"Sin asignar";
+
+  const ph = p => {
+    const avC = isLR(p)?"av-lr":isSivip(p)?"av-si":"av-ct";
+    const emailHtml = p.email==="N/a"
+      ? `<div class="person-email" style="color:var(--color-text-secondary)">Sin correo</div>`
+      : `<div class="person-email">${p.email}</div>`;
+    const roleLabel = isLR(p)?"Líder Regional":isSivip(p)?"Contratista SIVIP":"Contratista";
+    return `<div class="person">
+      <div class="avatar ${avC}">${initials(p.name)}</div>
+      <div class="person-info">
+        <div class="person-name">${p.name}</div>
+        <div class="person-role">${roleLabel}</div>
+        ${emailHtml}
+      </div></div>`;
+  };
+
+  let html = `<h3>${deptName}</h3><span class="role-badge ${bc}">${bt}</span>`;
+  if(!ppl.length){
+    html += `<p style="color:var(--color-text-secondary);font-size:13px">Sin personal asignado</p>`;
+  } else {
+    html += `<div id="dept-stats">
+      <div class="stat-card"><div class="stat-n">${lrs.length}</div><div class="stat-l">Líderes</div></div>
+      <div class="stat-card"><div class="stat-n">${cts.length+sivs.length}</div><div class="stat-l">Contratistas</div></div>
+      <div class="stat-card"><div class="stat-n">${ppl.length}</div><div class="stat-l">Total</div></div>
+    </div>`;
+    if(lrs.length)  html += `<h4 class="sec">Líderes regionales</h4>${lrs.map(ph).join("")}`;
+    if(cts.length)  html += `<h4 class="sec">Contratistas</h4>${cts.map(ph).join("")}`;
+    if(sivs.length) html += `<h4 class="sec">Contratistas SIVIP</h4>${sivs.map(ph).join("")}`;
+  }
+  document.getElementById("default-msg").style.display="none";
+  const card = document.getElementById("card");
+  card.style.display="block";
+  card.innerHTML=html;
+}
+
+const NAME_MAP={
+  "Amazonas":"Amazonas","Antioquia":"Antioquia","Arauca":"Arauca",
+  "Atlantico":"Atlántico","Atlántico":"Atlántico",
+  "Bolivar":"Bolívar","Bolívar":"Bolívar",
+  "Boyaca":"Boyacá","Boyacá":"Boyacá",
+  "Caldas":"Caldas","Caqueta":"Caquetá","Caquetá":"Caquetá",
+  "Casanare":"Casanare","Cauca":"Cauca","Cesar":"Cesar",
+  "Choco":"Chocó","Chocó":"Chocó",
+  "Cordoba":"Córdoba","Córdoba":"Córdoba",
+  "Cundinamarca":"Cundinamarca","Guainia":"Guainía","Guainía":"Guainía",
+  "Guajira":"La Guajira","La Guajira":"La Guajira",
+  "Guaviare":"Guaviare","Huila":"Huila","Magdalena":"Magdalena","Meta":"Meta",
+  "Narino":"Nariño","Nariño":"Nariño",
+  "Norte de Santander":"Norte de Santander","Norte De Santander":"Norte de Santander",
+  "Putumayo":"Putumayo","Quindio":"Quindío","Quindío":"Quindío",
+  "Risaralda":"Risaralda","San Andres":"San Andrés",
+  "Santander":"Santander","Sucre":"Sucre","Tolima":"Tolima",
+  "Valle del Cauca":"Valle del Cauca","Valle Del Cauca":"Valle del Cauca",
+  "Vaupes":"Vaupés","Vaupés":"Vaupés","Vichada":"Vichada",
+  "Bogota D.C.":"Bogotá D.C.","Bogotá D.C.":"Bogotá D.C.",
+  "Bogota":"Bogotá D.C.","Bogotá":"Bogotá D.C.",
+  "Bogotá, D.C.":"Bogotá D.C.","Distrito Capital":"Bogotá D.C."
+};
+
+const svg = d3.select("#svg-map");
+
+fetch("https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/col.topo.json")
+  .then(r=>r.ok?r.json():Promise.reject())
+  .then(drawTopo).catch(()=>drawManual());
+
+function drawTopo(col){
+  const key = Object.keys(col.objects)[0];
+  const features = topojson.feature(col, col.objects[key]).features;
+  const proj = d3.geoMercator().fitSize([520,740],{type:"FeatureCollection",features});
+  const path = d3.geoPath(proj);
+  svg.selectAll("path.dept").data(features).join("path")
+    .attr("class","dept")
+    .attr("d", path)
+    .attr("fill", d=>{
+      const raw = d.properties.NOMBRE_DPT||d.properties.name||d.properties.NAME||"";
+      return deptColor(NAME_MAP[raw]||raw);
+    })
+    .attr("fill-opacity", d=>{
+      const raw = d.properties.NOMBRE_DPT||d.properties.name||d.properties.NAME||"";
+      return deptOpacity(NAME_MAP[raw]||raw);
+    })
+    .attr("stroke", d=>{
+      const raw = d.properties.NOMBRE_DPT||d.properties.name||d.properties.NAME||"";
+      return deptStroke(NAME_MAP[raw]||raw).color;
+    })
+    .attr("stroke-width", d=>{
+      const raw = d.properties.NOMBRE_DPT||d.properties.name||d.properties.NAME||"";
+      return deptStroke(NAME_MAP[raw]||raw).width;
+    })
+    .on("click",(e,d)=>{
+      svg.selectAll(".dept").classed("selected",false);
+      d3.select(e.currentTarget).classed("selected",true);
+      const raw = d.properties.NOMBRE_DPT||d.properties.name||d.properties.NAME||"";
+      showCard(NAME_MAP[raw]||raw);
+    });
+}
+
+function drawManual(){
+  const depts=[
+    {name:"La Guajira",x:155,y:58,w:42,h:34},{name:"Atlántico",x:117,y:96,w:24,h:18},
+    {name:"Magdalena",x:143,y:86,w:38,h:42},{name:"Cesar",x:157,y:99,w:36,h:37},
+    {name:"Bolívar",x:108,y:113,w:42,h:52},{name:"Sucre",x:117,y:126,w:30,h:28},
+    {name:"Córdoba",x:107,y:136,w:37,h:42},{name:"Norte de Santander",x:184,y:133,w:40,h:35},
+    {name:"Santander",x:161,y:150,w:42,h:42},{name:"Arauca",x:199,y:147,w:40,h:30},
+    {name:"Antioquia",x:107,y:176,w:62,h:55},{name:"Boyacá",x:164,y:186,w:46,h:46},
+    {name:"Casanare",x:204,y:190,w:46,h:50},{name:"Chocó",x:77,y:190,w:40,h:58},
+    {name:"Caldas",x:121,y:228,w:30,h:24},{name:"Cundinamarca",x:162,y:228,w:42,h:32},
+    {name:"Vichada",x:247,y:208,w:56,h:55},{name:"Risaralda",x:105,y:246,w:24,h:22},
+    {name:"Quindío",x:117,y:250,w:18,h:18},{name:"Tolima",x:142,y:250,w:40,h:36},
+    {name:"Meta",x:205,y:240,w:56,h:56},{name:"Bogotá D.C.",x:161,y:238,w:14,h:14},
+    {name:"Valle del Cauca",x:95,y:260,w:36,h:36},{name:"Huila",x:151,y:270,w:40,h:42},
+    {name:"Guaviare",x:217,y:286,w:46,h:40},{name:"Guainía",x:271,y:266,w:46,h:42},
+    {name:"Cauca",x:105,y:290,w:46,h:40},{name:"Caquetá",x:165,y:284,w:56,h:56},
+    {name:"Vaupés",x:239,y:306,w:50,h:46},{name:"Nariño",x:99,y:326,w:46,h:42},
+    {name:"Putumayo",x:139,y:328,w:46,h:36},{name:"Amazonas",x:189,y:354,w:66,h:68},
+  ];
+  const g = svg.append("g");
+  depts.forEach(d=>{
+    const s = deptStroke(d.name);
+    g.append("rect").attr("class","dept")
+      .attr("x",d.x).attr("y",d.y).attr("width",d.w).attr("height",d.h).attr("rx",4)
+      .attr("fill",deptColor(d.name)).attr("fill-opacity",deptOpacity(d.name))
+      .attr("stroke",s.color).attr("stroke-width",s.width)
+      .on("click",e=>{
+        svg.selectAll(".dept").classed("selected",false);
+        d3.select(e.currentTarget).classed("selected",true);
+        showCard(d.name);
+      });
+    g.append("text")
+      .attr("x",d.x+d.w/2).attr("y",d.y+d.h/2+4)
+      .attr("text-anchor","middle").attr("font-size",7).attr("fill","#fff")
+      .attr("pointer-events","none").text(d.name.split(" ")[0]);
+  });
+}
+</script>
